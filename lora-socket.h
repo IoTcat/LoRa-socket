@@ -31,7 +31,7 @@ class LoRaSocket {
     static void rtcp(const String& msg);
 
     static void onReceived(const String& msg, const String& from, const String& to, const String& type){
-
+        Serial.println(msg);
     };
 
 
@@ -42,9 +42,9 @@ class LoRaSocket {
     static void LoRa_tx_mode();
     static void LoRa_rx_mode();
     static void send(const String& s);
-    static const String& receiveMsg();
+    static const String receiveMsg();
     /* Package Functions */
-    inline static const String& getIPHeader(const String& to = "0.0.0.0"){
+    inline static const String getIPHeader(const String& to = "0.0.0.0"){
         return to + "|" + LORA_SOCKET_IP + "|";
     };
     inline static bool isGoodPackage(const String& s){
@@ -54,35 +54,35 @@ class LoRaSocket {
         }
         return true;
     };
-    inline static const String& getToIP(const String& s){
+    inline static const String getToIP(const String& s){
         unsigned short left = s.indexOf('|');
         unsigned short right = s.indexOf('|', left + 1);
-        return s.substring(left, right - 1);
+        return s.substring(left + 1, right);
     };
-    inline static const String& getFromIP(const String& s){
+    inline static const String getFromIP(const String& s){
         unsigned short left = s.indexOf('|', s.indexOf('|') + 1);
         unsigned short right = s.indexOf('|', left + 1);
-        return s.substring(left, right - 1);
+        return s.substring(left + 1, right);
     };
-    inline static const String& getType(const String& s){
-        return s.substring(0, s.indexOf('|') - 1);
+    inline static const String getType(const String& s){
+        return s.substring(0, s.indexOf('|'));
     };
-    inline static const String& getContent(const String& s){
+    inline static const String getContent(const String& s){
         unsigned short left = s.indexOf('|', s.indexOf('|', s.indexOf('|') + 1) + 1);
         unsigned short right = s.indexOf('|', left + 1);
-        return decode(s.substring(left, right - 1));
+        return decode(s.substring(left + 1, right));
     };
-    inline static const String& getTcpKey(const String& s){
+    inline static const String getTcpKey(const String& s){
         unsigned short left = s.indexOf('|', s.indexOf('|', s.indexOf('|', s.indexOf('|') + 1) + 1) + 1);
         unsigned short right = s.indexOf('|', left + 1);
-        return decode(s.substring(left, right - 1));
+        return decode(s.substring(left + 1, right));
     };
     /* receive Functions */
     static void getMsg(const String& msg);
     /* tcp stack functions */
     static void checkSendStack(){
         for(unsigned int i = 0; i < tcp_sendingStack.Size(); i ++){
-            send(tcp_sendingStack[i]);
+            send("tc"+tcp_sendingStack[i]);
             tcp_sendingTryTimes[i] += 1;
 
             if(tcp_sendingTryTimes[i] >= MAX_TCP_TRY_TIMES){
@@ -102,17 +102,17 @@ class LoRaSocket {
     };
     static void removeByKey(const String& key);
     /* tools */
-    static const String& hash(const String& s);
-    static const String& encode(const String& s){
+    static const String hash(const String& s);
+    static const String encode(const String& s){
         return s;
     };
-    static const String& decode(const String& s){
+    static const String decode(const String& s){
         return s;
     }
-    static const String& generateRandomKey(){
+    static const String generateRandomKey(){
         String o = "";
         for(unsigned short i = 0; i < 4; i ++){
-            o += char(LoRa.random() % 26 + 97);
+            o += char(random(26) + 97);
         }
         return o;
     }
@@ -136,20 +136,22 @@ void LoRaSocket::getMsg(const String& msg){
 
     if(getType(msg) == "udp") onReceived(getContent(msg), getFromIP(msg), getToIP(msg), "udp");
     if(getType(msg) == "tcp"){
+        rtcp(msg);
         if(tcp_receiveStack.Find(msg) != -1) return;
         onReceived(getContent(msg), getFromIP(msg), getToIP(msg), "tcp");
-        rtcp(msg);
         receiveStackClassify();
     }
-    if(getType(msg) == "rtcp"){
+    if(getType(msg) == "rtcp"){Serial.println(msg);
+        Serial.print("good rtcp");
         removeByKey(getContent(msg));
     }
 
 }
 
 void LoRaSocket::udp(const String& msg, const String& to){
-    String fin = "udp|" + getIPHeader(to) + encode(msg) + "|";
+    String fin = "udp|"+ getIPHeader(to) + encode(msg) + "|";
     fin += hash(fin);
+    Serial.println(fin);
     send(fin);
 };
 
@@ -210,7 +212,7 @@ void LoRaSocket::send(const String& s){
 }
 
 
-const String& LoRaSocket::receiveMsg(){
+const String LoRaSocket::receiveMsg(){
     String s = "";
     while (LoRa.available()) {
         s += (char)LoRa.read();
@@ -218,18 +220,18 @@ const String& LoRaSocket::receiveMsg(){
     return s;
 }
 
-const String& LoRaSocket::hash(const String& s){
+const String LoRaSocket::hash(const String& s){
     unsigned char hashVal = 'k';
     for(unsigned short i = 0; i < s.length(); i ++){
         hashVal ^= s.charAt(i);
     }
     hashVal = hashVal % 26 + 97;
-    return String(hashVal);
+    return String((char)hashVal);
 }
 
 
 void LoRaSocket::removeByKey(const String& key){
-    for(unsigned int i = 0; i < tcp_sendingStack.Size(); i++){
+    for(unsigned int i = 0; i < tcp_sendingStack.Size(); i++){Serial.print(getTcpKey(tcp_sendingStack[i]));
         if(getTcpKey(tcp_sendingStack[i]) == key) {
             tcp_sendingStack.Erase(i);
             return;

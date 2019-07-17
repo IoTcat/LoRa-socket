@@ -13,9 +13,15 @@ LoRaSocket socket;
 
 void setup(){
 
+    Serial.begin(115200);
+   if (!LoRa.begin(433E6)) {
+    Serial.println("Starting LoRa failed!");
+    while (1);
+  }
+
     socket.ini();
-    socket.tcp("lalalla", "10.2.3.1");
-    socket.udp("ll");
+    //socket.udp("lalalla");
+    socket.tcp("tomato is rabbish", "2.2.2.2");
 }
 
 
