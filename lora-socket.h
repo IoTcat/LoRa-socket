@@ -3,6 +3,7 @@
 
 #include <LoRa.h>
 #include "vector.h"
+#include "stringVec.h"
 
 #ifndef LORA_SOCKET_IP
 #define LORA_SOCKET_IP "0.0.0.0"
@@ -36,7 +37,7 @@ class LoRaSocket {
 
 
    private:
-    static Vector<String> tcp_sendingStack, tcp_receiveStack;
+    static StringVec tcp_sendingStack, tcp_receiveStack;
     static Vector<unsigned int> tcp_sendingTryTimes;
     /* LoRa Functions */
     static void LoRa_tx_mode();
@@ -73,9 +74,9 @@ class LoRaSocket {
         return decode(s.substring(left + 1, right));
     };
     inline static const String getTcpKey(const String& s){
-        unsigned short left = s.indexOf('|', s.indexOf('|', s.indexOf('|', s.indexOf('|') + 1) + 1) + 1);
-        unsigned short right = s.indexOf('|', left + 1);
-        return decode(s.substring(left + 1, right));
+        int left = s.indexOf('|', s.indexOf('|', s.indexOf('|', s.indexOf('|') + 1) + 1) + 1);
+        int right = s.indexOf('|', left + 1);
+        return s.substring(left + 1, right);
     };
     /* receive Functions */
     static void getMsg(const String& msg);
@@ -141,8 +142,7 @@ void LoRaSocket::getMsg(const String& msg){
         onReceived(getContent(msg), getFromIP(msg), getToIP(msg), "tcp");
         receiveStackClassify();
     }
-    if(getType(msg) == "rtcp"){Serial.println(msg);
-        Serial.print("good rtcp");
+    if(getType(msg) == "rtcp"){
         removeByKey(getContent(msg));
     }
 
@@ -151,7 +151,6 @@ void LoRaSocket::getMsg(const String& msg){
 void LoRaSocket::udp(const String& msg, const String& to){
     String fin = "udp|"+ getIPHeader(to) + encode(msg) + "|";
     fin += hash(fin);
-    Serial.println(fin);
     send(fin);
 };
 
@@ -173,7 +172,7 @@ void LoRaSocket::rtcp(const String& msg){
     send(fin);
 }
 
-Vector<String> LoRaSocket::tcp_sendingStack, LoRaSocket::tcp_receiveStack;
+StringVec LoRaSocket::tcp_sendingStack, LoRaSocket::tcp_receiveStack;
 Vector<unsigned int> LoRaSocket::tcp_sendingTryTimes;
 
 void LoRaSocket::ini() {
@@ -231,7 +230,7 @@ const String LoRaSocket::hash(const String& s){
 
 
 void LoRaSocket::removeByKey(const String& key){
-    for(unsigned int i = 0; i < tcp_sendingStack.Size(); i++){Serial.print(getTcpKey(tcp_sendingStack[i]));
+    for(unsigned int i = 0; i < tcp_sendingStack.Size(); i++){
         if(getTcpKey(tcp_sendingStack[i]) == key) {
             tcp_sendingStack.Erase(i);
             return;
