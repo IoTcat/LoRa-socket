@@ -30,16 +30,19 @@ class LoRaSocket {
     static void udp(const String& msg, const String& to = "0.0.0.0");
     static void tcp(const String& msg, const String& to);
     static void rtcp(const String& msg);
-
-    static void onReceived(const String& msg, const String& from, const String& to, const String& type){
-        Serial.println(msg);
+    inline static void onReceived(void (*f)(String, String, String, String)){
+        _f = f;
     };
 
 
    private:
     static StringVec tcp_sendingStack, tcp_receiveStack;
     static Vector<unsigned int> tcp_sendingTryTimes;
-    /* LoRa Functions */
+    static void(*_f)(String, String, String, String);
+    inline static void _onReceived(const String& msg, const String& from, const String& to, const String& type){
+        (*_f)(msg, from, to, type);
+    };
+  /* LoRa Functions */
     static void LoRa_tx_mode();
     static void LoRa_rx_mode();
     static void send(const String& s);
@@ -135,11 +138,11 @@ void LoRaSocket::getMsg(const String& msg){
     if(!isGoodPackage(msg)) return;
     if(getToIP(msg) != LORA_SOCKET_IP && getToIP(msg) != "0.0.0.0") return;
 
-    if(getType(msg) == "udp") onReceived(getContent(msg), getFromIP(msg), getToIP(msg), "udp");
+    if(getType(msg) == "udp") _onReceived(getContent(msg), getFromIP(msg), getToIP(msg), "udp");
     if(getType(msg) == "tcp"){
         rtcp(msg);
         if(tcp_receiveStack.Find(msg) != -1) return;
-        onReceived(getContent(msg), getFromIP(msg), getToIP(msg), "tcp");
+        _onReceived(getContent(msg), getFromIP(msg), getToIP(msg), "tcp");
         receiveStackClassify();
     }
     if(getType(msg) == "rtcp"){
@@ -174,6 +177,7 @@ void LoRaSocket::rtcp(const String& msg){
 
 StringVec LoRaSocket::tcp_sendingStack, LoRaSocket::tcp_receiveStack;
 Vector<unsigned int> LoRaSocket::tcp_sendingTryTimes;
+void (*LoRaSocket::_f)(String, String, String, String);
 
 void LoRaSocket::ini() {
 
