@@ -50,6 +50,8 @@ void loop(){
         String message, fromIP, toIP, msgType;
         socket.getNewMsg(message, fromIP, toIP, msgType); //通过引用获取消息内容，发信ip，收信ip，消息类型
     }
+    
+    socket.core(); //循环组件
 }
 
 
