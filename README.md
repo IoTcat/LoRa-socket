@@ -1,30 +1,34 @@
 # LoRa-socket
 
-## 使用案例 - 使用回调函数
+![size](https://badge-size.herokuapp.com/iotcat/LoRa-socket/master/lora-socket.h)
+
+[简体中文](./zh.md)
+
+## Usage - with Callback Functions
 ```C++
 
-#define LORA_SOCKET_IP "1.0.0.1" //需唯一
+#define LORA_SOCKET_IP "1.0.0.1" //need to be unique
 
 #include "lora-socket.h"
 
 LoRaSocket socket;
 
 void setup(){
-    socket.ini(); //初始化
-    socket.onReceived(doIfRec); //注册回调函数，当接收到新消息时触发
+    socket.ini(); //initalization
+    socket.onReceived(doIfRec); //Register a callback function, which is triggered when a new message is received
 }
 
 void doIfRec(String message, String fromIP, String toIP, String msgType){
-    //当收到新消息时执行这个函数中的内容
+    //Execute the this function when a new message is received
     
-    socket.udp("你好"); //使用udp广播
-    socket.udp("xx你好", "1.0.0.2"); //使用udp向1.0.0.2发送消息
-    socket.tcp("xxx你好", "1.0.0.2");  //使用tcp向1.0.0.2可靠地发送消息
+    socket.udp("Hi"); //Broadcast using udp
+    socket.udp("Hi xx", "1.0.0.2"); //Use udp to send messages to 1.0.0.2
+    socket.tcp("Hi xxx", "1.0.0.2");  //Use tcp to send messages reliably to 1.0.0.2
 }
 
 void loop(){
-    //注意loop()全局不得有delay，否则会导致接收不稳定
-    socket.core(); //循环组件
+    //No delay() could be used in loop()
+    socket.core(); //Socket service core
 }
 
 
@@ -32,26 +36,26 @@ void loop(){
 ## 使用案例 - 使用条件触发
 ```C++
 
-#define LORA_SOCKET_IP "1.0.0.1" //需唯一
+#define LORA_SOCKET_IP "1.0.0.1" //need to be unique
 
 #include "lora-socket.h"
 
 LoRaSocket socket;
 
 void setup(){
-    socket.ini(); //初始化
+    socket.ini(); //initalization
 }
 
 void loop(){
-    //注意loop()全局不得有delay，否则会导致接收不稳定
-    if(socket.isNewMsg()){ //判断是否有新消息
-        Serial.println(socket.getNewMsg()); //直接打印出新消息(法一)
+    //No delay() could be used in loop()
+    if(socket.isNewMsg()){ //Determine whether there is new message
+        Serial.println(socket.getNewMsg()); //Print out new messages directly [Method 1]
         
         String message, fromIP, toIP, msgType;
-        socket.getNewMsg(message, fromIP, toIP, msgType); //通过引用获取消息内容，发信ip，收信ip，消息类型
+        socket.getNewMsg(message, fromIP, toIP, msgType); //Get content and information by reference [Method 2]
     }
     
-    socket.core(); //循环组件
+    socket.core(); //Socket service core
 }
 
 
