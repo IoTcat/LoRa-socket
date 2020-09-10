@@ -33,7 +33,7 @@ void loop(){
 
 
 ```
-## 使用案例 - 使用条件触发
+## Usage - with If in loop()
 ```C++
 
 #define LORA_SOCKET_IP "1.0.0.1" //need to be unique
